@@ -303,34 +303,50 @@ function speakList(list){
 /* ================= 語音：辨識 ================= */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 let active = null;
+// 結束辨識不能只靠瀏覽器的 onend：iPhone Safari 常常不觸發 onend、也不把結果標成 final，
+// 所以這裡自己記住目前聽到的文字，按下「說完了」或安靜一段時間後，最多等 1.2 秒就自己結束。
 function listen({onInterim, onDone, onError}){
   if(active){ active.stop(); return null; }
   stopSpeak();
   const r = new SR();
-  r.lang='en-US'; r.interimResults=true; r.continuous=true; r.maxAlternatives=5;
-  const finals=[], alts=[]; let silence=null, heardAny=false;
-  const maxT = setTimeout(()=>r.stop(), 15000);
-  const arm = ()=>{ clearTimeout(silence); silence=setTimeout(()=>r.stop(), heardAny?1800:6000); };
+  r.lang='en-US'; r.interimResults=true; r.continuous=true; r.maxAlternatives = IS_IOS?1:5;
+  let text='', heard=false, done=false, err=null, silence=null, killT=null, stopping=false;
+  const altSet = new Set();
+  const finalize = ()=>{
+    if(done) return; done=true;
+    clearTimeout(silence); clearTimeout(maxT); clearTimeout(killT); active=null;
+    if(err && !text && !['no-speech','aborted'].includes(err)){ onError && onError(err); return; }
+    const alts = altSet.size ? [text, ...[...altSet].filter(a=>a!==text)] : (text?[text]:[]);
+    onDone({text, alts});
+  };
+  const requestStop = ()=>{
+    if(done || stopping) return; stopping=true;
+    try{ r.stop(); }catch(e){}
+    killT = setTimeout(()=>{ try{ r.abort(); }catch(e){} finalize(); }, 1200);
+  };
+  const arm = ()=>{ clearTimeout(silence); silence=setTimeout(requestStop, heard?1800:7000); };
+  const maxT = setTimeout(requestStop, 15000);
   arm();
   r.onresult = e=>{
-    let interim='';
-    for(let i=e.resultIndex;i<e.results.length;i++){
-      const res=e.results[i];
-      if(res.isFinal){ finals.push(res[0].transcript); for(let k=0;k<res.length;k++) alts.push(res[k].transcript); }
-      else interim += res[0].transcript;
+    // 每次都從頭重組文字，避免 iPhone 重複送出同一段話
+    let acc='';
+    for(let i=0;i<e.results.length;i++){
+      const res=e.results[i], t=(res[0].transcript||'').trim();
+      if(!t) continue;
+      const A=acc.toLowerCase(), T=t.toLowerCase();
+      if(A && T.startsWith(A)) acc=t;
+      else if(!A.endsWith(T)) acc=(acc+' '+t).trim();
+      if(res.isFinal) for(let k=0;k<res.length;k++) altSet.add(res[k].transcript.trim());
     }
-    heardAny=true; arm();
-    onInterim && onInterim((finals.join(' ')+' '+interim).trim());
+    text=acc; heard=true;
+    if(!stopping) arm();
+    onInterim && onInterim(text);
   };
-  let err=null;
-  r.onerror = e=>{ err=e.error; };
-  r.onend = ()=>{
-    clearTimeout(silence); clearTimeout(maxT); active=null;
-    if(err && err!=='no-speech' && err!=='aborted'){ onError && onError(err); return; }
-    onDone({text: finals.join(' ').trim(), alts});
-  };
-  try{ r.start(); active=r; }catch(e){ onError && onError('start'); return null; }
-  return r;
+  r.onerror = e=>{ err=e.error; requestStop(); };
+  r.onend = finalize;
+  try{ r.start(); }catch(e){ onError && onError('start'); return null; }
+  active = { stop: requestStop };
+  return active;
 }
 function errMsg(code){
   if(code==='not-allowed'||code==='service-not-allowed')
@@ -420,7 +436,7 @@ function renderCard(item, opts={}){
   };
 
   mic.onclick = ()=>{
-    if(active){ active.stop(); return; }
+    if(active){ active.stop(); mic.textContent='⏳ 處理中…'; return; }
     resBox.className='result';
     const r = listen({
       onInterim: t=>{ card.querySelector('.interim').textContent=t; },
@@ -492,7 +508,8 @@ function renderMock(){
   main.appendChild(el(`<div class="mock-top"><b>第 ${mock.idx+1} / 5 題　${p.name} ${esc(p.title)}</b><span class="muted">${esc(p.short)}</span></div>`));
   main.appendChild(el(`<div class="prog"><div style="width:${mock.idx*20}%"></div></div>`));
   main.appendChild(el(`<div class="parthead" style="max-width:620px;margin:0 auto 12px"><p style="margin:0">${esc(p.desc)}</p></div>`));
-  const card=renderCard(it,{big:true, autoQuestion:true, onGraded:(s,par)=>{ mock.score[mock.idx]=s; if(par) mock.parent[mock.idx]=true; }});
+  const myIdx=mock.idx;
+  const card=renderCard(it,{big:true, autoQuestion:true, onGraded:(s,par)=>{ mock.score[myIdx]=s; if(par) mock.parent[myIdx]=true; }});
   main.appendChild(card);
   const nav=el(`<div style="max-width:620px;margin:12px auto 0;display:flex;justify-content:space-between">
      <button class="btn" id="quitMock">結束模擬</button>
