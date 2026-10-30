@@ -349,6 +349,13 @@ function listen({onInterim, onDone, onError}){
   return active;
 }
 function errMsg(code){
+  if((code==='not-allowed'||code==='service-not-allowed') && IS_IOS)
+    return '麥克風或語音辨識被擋住了（代碼：'+code+'）。請檢查：<ol style="margin:6px 0 0;padding-left:20px">'+
+      '<li>要用 <b>Safari</b> 開啟（不要在 LINE、Facebook 裡直接點開，也不要用 iPhone 版 Chrome）。</li>'+
+      '<li>點網址列左邊的「<b>大小</b>」圖示 → 網站設定 → 麥克風 → 選「允許」或「詢問」。</li>'+
+      '<li>「設定」→「Safari」→「麥克風」→ 選「允許」或「詢問」。</li>'+
+      '<li>「設定」→「一般」→「鍵盤」→ 打開「啟用聽寫」；「設定」→「Siri」也要打開。</li>'+
+      '<li>「設定」→「螢幕使用時間」→「內容與隱私權限制」→「允許的 App」，確認「Siri 與聽寫」是打開的。</li></ol>改完後把 Safari 完全關掉再打開。';
   if(code==='not-allowed'||code==='service-not-allowed')
     return '麥克風被擋住了。請按網址列左邊的圖示，把「麥克風」改成允許，再重新整理頁面。（如果是在 Claude 對話裡直接預覽，請先下載檔案，再用 Chrome 打開。）';
   if(code==='network') return '語音辨識需要連上網路，請確認網路後再試一次。';
