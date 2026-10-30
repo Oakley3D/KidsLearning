@@ -105,6 +105,7 @@
       <div class="seg" id="rateSeg">
         <button data-r="0.6">0.6x 超慢</button><button data-r="0.8">0.8x 慢</button><button data-r="1" class="on">1.0x 標準</button>
       </div>
+      <button class="btn" id="stopBtn" style="padding:6px 10px">⏹ 停止發音</button>
     </div>
   </header>
 
@@ -270,22 +271,41 @@ function pickVoice(){
   VOICE = vs.find(v=>/Google US English/i.test(v.name)) || vs.find(v=>/Samantha|Aria|Jenny|Zira/i.test(v.name)) || vs[0] || null;
 }
 if('speechSynthesis' in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
-function speak(text, onend){
+// iPhone / iPad 的 Safari 有幾個已知問題：
+// 1) cancel() 之後馬上 speak() 會讓朗讀卡住；2) 朗讀物件被回收後就不會結束；3) 指定某些聲音會沒聲音。
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+let curU = null, chain = 0;
+function stopSpeak(){ chain++; if('speechSynthesis' in window){ try{ speechSynthesis.cancel(); }catch(e){} } curU=null; }
+function speak(text, onend, keepChain){
   if(!('speechSynthesis' in window)) return;
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang='en-US'; u.rate=RATE; if(VOICE) u.voice=VOICE;
-  if(onend) u.onend=onend;
-  speechSynthesis.speak(u);
+  if(!keepChain) chain++;
+  const my = chain, ss = speechSynthesis;
+  const go = ()=>{
+    if(my!==chain) return;
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang='en-US'; u.rate=RATE;
+    if(VOICE && !IS_IOS) u.voice=VOICE;
+    u.onend = ()=>{ if(curU===u) curU=null; if(onend && my===chain) onend(); };
+    u.onerror = ()=>{ if(curU===u) curU=null; };
+    curU = u;                      // 保留參考，避免被回收
+    try{ ss.resume(); }catch(e){}
+    ss.speak(u);
+  };
+  if(ss.speaking || ss.pending){ ss.cancel(); setTimeout(go, 150); }
+  else go();                       // 直接在點擊當下朗讀（iOS 第一次朗讀必須這樣）
 }
-function speakList(list){ let i=0; const next=()=>{ if(i<list.length) speak(list[i++], ()=>setTimeout(next,450)); }; next(); }
+function speakList(list){
+  chain++; const my=chain; let i=0;
+  const next=()=>{ if(my!==chain || i>=list.length) return; speak(list[i++], ()=>setTimeout(next,450), true); };
+  next();
+}
 
 /* ================= 語音：辨識 ================= */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 let active = null;
 function listen({onInterim, onDone, onError}){
   if(active){ active.stop(); return null; }
-  speechSynthesis && speechSynthesis.cancel();
+  stopSpeak();
   const r = new SR();
   r.lang='en-US'; r.interimResults=true; r.continuous=true; r.maxAlternatives=5;
   const finals=[], alts=[]; let silence=null, heardAny=false;
@@ -384,7 +404,7 @@ function renderCard(item, opts={}){
   if(md) md.onclick=()=>{
     if(item.type==='read') speakList(item.sentences);
     else if(item.type==='phon') speakList(item.words);
-    else speakList(item.model.split(/(?<=[.?!])\s+/));
+    else speakList(item.model.match(/[^.?!]+[.?!]?/g).map(x=>x.trim()).filter(Boolean));
   };
 
   const finish = (stars, html, cls, parentBtn=true)=>{
@@ -428,8 +448,8 @@ function renderCard(item, opts={}){
     });
     if(r){ mic.classList.add('rec'); mic.textContent='⏹ 說完了'; lis.classList.add('show'); card.querySelector('.interim').textContent=''; }
   };
-  if(opts.autoQuestion){ if(item.type==='qa') setTimeout(()=>speak(item.q),250);
-    else if(item.type==='pic') setTimeout(()=>speak('Look at the picture. Please say two sentences.'),250); }
+  if(opts.autoQuestion){ if(item.type==='qa') speak(item.q);
+    else if(item.type==='pic') speak('Look at the picture. Please say two sentences.'); }
   return card;
 }
 
@@ -543,12 +563,13 @@ function renderHelp(){
 }
 
 /* ================= 初始化 ================= */
-function render(){ if(active) active.stop(); speechSynthesis && speechSynthesis.cancel();
+function render(){ if(active) active.stop(); stopSpeak();
   if(mode==='practice') renderPractice(); else if(mode==='mock') renderMock(); else renderHelp(); }
 document.querySelectorAll('.modes button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.modes button').forEach(x=>x.classList.toggle('on',x===b)); mode=b.dataset.m; render(); });
 document.querySelectorAll('#rateSeg button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('#rateSeg button').forEach(x=>x.classList.toggle('on',x===b)); RATE=+b.dataset.r; speak('This is the speed.'); });
+document.getElementById('stopBtn').onclick=stopSpeak;
 const banner=document.getElementById('srBanner');
 if(!SR) banner.innerHTML='<div class="banner warn">⚠️ 這個瀏覽器不支援語音辨識，麥克風按鈕無法使用（仍然可以聽題目、看答案）。請改用<b>電腦版 Chrome 或 Edge</b> 開啟這個檔案。</div>';
 else banner.innerHTML='<div class="banner info">✅ 可以使用語音辨識。第一次按「🎤 開始回答」時請允許使用麥克風。</div>';
