@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>五年級英語口試 語音練習</title>
+<style>
+  :root{
+    --bg:#fffaf2; --card:#ffffff; --ink:#1f2937; --muted:#6b7280; --line:#f1e4cf;
+    --accent:#ea8a0c; --accent-soft:#fff1dc; --blue:#2563eb; --blue-soft:#e8f0ff;
+    --green:#15803d; --green-soft:#e7f7ec; --red:#dc2626; --red-soft:#fdecec;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"PingFang TC","Microsoft JhengHei","Noto Sans TC",system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5}
+  .wrap{max-width:980px;margin:0 auto;padding:16px 16px 60px}
+  header{display:flex;flex-wrap:wrap;align-items:center;gap:12px;justify-content:space-between;margin-bottom:12px}
+  h1{font-size:22px;margin:0}
+  .sub{color:var(--muted);font-size:14px;margin:2px 0 0}
+  .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:14px}
+  .seg{display:inline-flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .seg button{border:0;background:none;padding:6px 10px;cursor:pointer;font:inherit;color:var(--muted)}
+  .seg button.on{background:var(--accent);color:#fff;font-weight:700}
+  .banner{border-radius:12px;padding:10px 14px;font-size:14px;margin:10px 0}
+  .banner.warn{background:var(--red-soft);color:#991b1b;border:1px solid #f8c9c9}
+  .banner.info{background:var(--green-soft);color:#14532d;border:1px solid #c5ebd2}
+  .modes{display:flex;gap:8px;margin:14px 0}
+  .modes button{flex:1;padding:12px;border-radius:12px;border:2px solid var(--line);background:#fff;font:inherit;font-weight:700;font-size:16px;cursor:pointer}
+  .modes button.on{border-color:var(--accent);background:var(--accent-soft);color:#9a5a05}
+  .parts{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
+  .parts button{padding:10px 6px;border-radius:12px;border:1px solid var(--line);background:#fff;cursor:pointer;font:inherit;text-align:center}
+  .parts button b{display:block;font-size:15px}
+  .parts button span{font-size:12px;color:var(--muted)}
+  .parts button.on{border:2px solid var(--accent);background:var(--accent-soft)}
+  .parthead{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin-bottom:12px}
+  .parthead h2{margin:0;font-size:18px}
+  .parthead p{margin:4px 0 0;color:var(--muted);font-size:14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+  .card.big{max-width:620px;margin:0 auto}
+  .chead{display:flex;align-items:center;gap:8px}
+  .chead .ic{font-size:26px}
+  .chead .lb{font-weight:700}
+  .chead .st{margin-left:auto;font-size:15px;letter-spacing:1px}
+  .bubble{border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:8px}
+  .bubble.t{background:var(--blue-soft)}
+  .bubble .who{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--blue);display:block}
+  .bubble .txt{font-size:18px;font-weight:600}
+  .say{margin-left:auto;border:1px solid #cbd5e1;background:#fff;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:16px;flex:none}
+  .sent{display:flex;align-items:center;gap:8px;background:#f8fafc;border-left:4px solid var(--blue);border-radius:8px;padding:8px 10px;font-size:17px}
+  .scene{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .scene>div{border:2px dashed #d6c7ad;border-radius:12px;min-height:110px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;padding:8px;font-size:34px;position:relative;background:#fffdf8}
+  .scene .mark{position:absolute;top:4px;right:8px;font-size:26px}
+  .scene .cap{position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:12px;color:var(--muted)}
+  .words{display:flex;flex-wrap:wrap;gap:8px}
+  .word{display:inline-flex;align-items:center;gap:6px;border:1px solid #cbd5e1;border-radius:999px;padding:6px 12px;background:#fff;font-size:18px;font-weight:600;cursor:pointer}
+  .word small{font-size:11px;color:var(--muted);font-weight:400}
+  .word.ok{background:var(--green-soft);border-color:#86d3a0}
+  .word.miss{background:var(--red-soft);border-color:#f3a5a5}
+  details{font-size:14px;background:#fafafa;border-radius:10px;padding:6px 10px}
+  details summary{cursor:pointer;color:var(--muted)}
+  details ul{margin:6px 0 2px;padding-left:20px}
+  .acts{display:flex;flex-wrap:wrap;gap:8px}
+  .btn{border:1px solid #cbd5e1;background:#fff;border-radius:10px;padding:8px 12px;font:inherit;font-size:14px;cursor:pointer}
+  .btn.mic{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;font-size:16px;padding:10px 16px}
+  .btn.mic.rec{background:var(--red);border-color:var(--red);animation:pulse 1.2s infinite}
+  .btn.primary{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:700}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  @keyframes pulse{50%{box-shadow:0 0 0 8px rgba(220,38,38,.18)}}
+  .result{border-radius:12px;padding:10px 12px;font-size:15px;display:none}
+  .result.show{display:block}
+  .result.good{background:var(--green-soft)}
+  .result.mid{background:#fff7e0}
+  .result.bad{background:var(--red-soft)}
+  .result .heard{color:var(--muted);font-size:14px}
+  .result .target{font-size:17px;margin:6px 0}
+  .w-ok{color:var(--green);font-weight:700}
+  .w-miss{color:var(--red);font-weight:700;text-decoration:underline wavy}
+  .result ul{margin:6px 0 0;padding-left:20px}
+  .stars{font-size:20px}
+  .parent{margin-top:8px}
+  .listen{color:var(--red);font-weight:700;font-size:14px;display:none}
+  .listen.show{display:block}
+  .mock-top{display:flex;justify-content:space-between;align-items:center;max-width:620px;margin:0 auto 10px}
+  .prog{height:8px;background:#eee;border-radius:99px;overflow:hidden;max-width:620px;margin:0 auto 12px}
+  .prog>div{height:100%;background:var(--accent)}
+  table{border-collapse:collapse;width:100%;font-size:15px}
+  th,td{border-bottom:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}
+  .total{font-size:28px;font-weight:800;color:#9a5a05}
+  .help h3{margin:18px 0 6px;font-size:17px}
+  .help li{margin:3px 0}
+  .muted{color:var(--muted);font-size:13px}
+  @media (max-width:640px){.parts{grid-template-columns:repeat(3,1fr)} h1{font-size:19px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>🌻 五年級英語口試 語音練習</h1>
+      <p class="sub">聽題目 → 按麥克風開口回答 → 電腦幫你比對答案（5 個部分，每部分 4 分，共 20 分）</p>
+    </div>
+    <div class="controls">
+      <span>朗讀語速</span>
+      <div class="seg" id="rateSeg">
+        <button data-r="0.6">0.6x 超慢</button><button data-r="0.8">0.8x 慢</button><button data-r="1" class="on">1.0x 標準</button>
+      </div>
+    </div>
+  </header>
+
+  <div id="srBanner"></div>
+
+  <div class="modes">
+    <button data-m="practice" class="on">📚 分項練習</button>
+    <button data-m="mock">📝 模擬口試</button>
+    <button data-m="help">👨‍👩‍👧 使用說明＆家長檢核</button>
+  </div>
+
+  <main id="main"></main>
+</div>
+
+<script>
+/* ================= 題庫 ================= */
+const PAPAYA = '<svg viewBox="0 0 40 50" width="30" height="38" aria-label="papaya"><ellipse cx="20" cy="25" rx="15" ry="21" fill="#f59e0b" stroke="#92400e" stroke-width="2"/><ellipse cx="20" cy="27" rx="8" ry="12" fill="#fb923c"/><g fill="#1f2937"><circle cx="17" cy="22" r="1.7"/><circle cx="23" cy="24" r="1.7"/><circle cx="18" cy="29" r="1.7"/><circle cx="22" cy="31" r="1.7"/><circle cx="20" cy="26" r="1.7"/></g></svg>';
+const rep = (s,n)=>Array(n).fill(s).join('');
+const ROOMS = ['bedroom','bathroom','kitchen','dining room','living room'];
+const VERBS = ['cooking','eating','reading','sleeping','writing','running'];
+const NUMW = ['two','three','four','five','six','seven','eight','nine','ten'];
+const DRINKS = ['milk','tea','water','juice','coffee'];
+
+const PARTS = [
+  {n:1, name:'Part 1', title:'Greeting 問候與情境問答', short:'問候', desc:'聽老師的問題，用完整的句子回答：問候、在哪個房間、正在做什麼。'},
+  {n:2, name:'Part 2', title:'Sentence Reading 朗讀句子', short:'朗讀', desc:'大聲流暢地唸出題目卡上的兩個句子。注意 He / She 後面動詞加 s、複數要唸出 s。'},
+  {n:3, name:'Part 3', title:'Picture Description 看圖描述', short:'看圖', desc:'看圖說兩個完整句子：①喜不喜歡（likes / doesn\'t like）②需要幾個（needs + 數字 + 複數）。'},
+  {n:4, name:'Part 4', title:'Q&A 句型問答', short:'問答', desc:'聽老師的問題，用完整句子回答喜好和需要的數量。'},
+  {n:5, name:'Part 5', title:'Phonics 發音與拼讀', short:'發音', desc:'依序唸出卡片上的 4 個單字，注意長母音 a、e、i 的發音。'}
+];
+
+const ITEMS = [
+  // Part 1
+  {id:'p1a',part:1,type:'qa',icon:'🏫',label:'日常問候',q:'Good morning!',model:'Good morning, Teacher!',
+   answers:['Good morning, Teacher!'],others:[]},
+  {id:'p1b',part:1,type:'qa',icon:'😊',label:'禮貌回應',q:'How are you today?',model:"I'm good, thank you.",
+   answers:["I'm good, thank you.","I'm fine, thank you.","I'm OK, thank you.","I'm not so good."],
+   others:["I'm fine, thank you.","I'm OK, thank you.","I'm not so good."]},
+  {id:'p1c',part:1,type:'qa',icon:'🛏️',label:'在哪個房間',q:'Where are you?',model:"I'm in the bedroom.",
+   answers:ROOMS.map(r=>`I'm in the ${r}.`),others:ROOMS.slice(1).map(r=>`I'm in the ${r}.`)},
+  {id:'p1d',part:1,type:'qa',icon:'🍳',label:'正在做什麼',q:'What are you doing?',model:"I'm cooking.",
+   answers:VERBS.map(v=>`I'm ${v}.`),others:VERBS.slice(1).map(v=>`I'm ${v}.`)},
+  // Part 2
+  {id:'p2a',part:2,type:'read',icon:'🧃☕',label:'Card A',sentences:['Do you like juice?','She likes coffee.']},
+  {id:'p2b',part:2,type:'read',icon:'🍵💧',label:'Card B',sentences:['He likes tea.','Water is the best.']},
+  {id:'p2c',part:2,type:'read',icon:'🍎🧼',label:'Card C',sentences:['He needs two apples.',"Let's wash our hands first."]},
+  {id:'p2d',part:2,type:'read',icon:'🍊🧽',label:'Card D',sentences:['We can make orange peel cleaner.','I need six oranges.']},
+  // Part 3
+  {id:'p3a',part:3,type:'pic',icon:'👧',label:'Card 1',
+   left:{who:'👧',thing:'☕',mark:'🚫',cap:'coffee'},right:{html:rep('🍎',3)},
+   model:"She doesn't like coffee. She needs three apples.",
+   answers:["She doesn't like coffee. She needs three apples."]},
+  {id:'p3b',part:3,type:'pic',icon:'👦',label:'Card 2',
+   left:{who:'👦',thing:'🍋🥤',mark:'❤️',cap:'lemon juice'},right:{html:rep('🍊',5)},
+   model:'He likes lemon juice. He needs five oranges.',
+   answers:['He likes lemon juice. He needs five oranges.','He likes lemonade. He needs five oranges.']},
+  {id:'p3c',part:3,type:'pic',icon:'👧',label:'Card 3',
+   left:{who:'👧',thing:'🍵',mark:'❤️',cap:'tea'},right:{html:rep('🍌',4)},
+   model:'She likes tea. She needs four bananas.',
+   answers:['She likes tea. She needs four bananas.']},
+  {id:'p3d',part:3,type:'pic',icon:'👦',label:'Card 4',
+   left:{who:'👦',thing:'🥤',mark:'🚫',cap:'cola'},right:{html:rep(PAPAYA,6),cap:'papaya'},
+   model:"He doesn't like cola. He needs six papayas.",
+   answers:["He doesn't like cola. He needs six papayas.","He doesn't like coke. He needs six papayas."]},
+  // Part 4
+  {id:'p4a',part:4,type:'qa',icon:'🧃',label:'Unit 1 喜好（肯定）',q:'Do you like juice?',model:'Yes, I do.',
+   answers:['Yes, I do.',"No, I don't."].concat(DRINKS.filter(d=>d!=='juice').map(d=>`No, I don't. I like ${d}.`)),
+   others:["No, I don't. I like milk.","No, I don't."]},
+  {id:'p4b',part:4,type:'qa',icon:'☕',label:'Unit 1 喜好（否定）',q:'Do you like coffee?',model:"No, I don't. I like tea.",
+   answers:['Yes, I do.',"No, I don't."].concat(DRINKS.filter(d=>d!=='coffee').map(d=>`No, I don't. I like ${d}.`)),
+   others:["No, I don't.","Yes, I do."]},
+  {id:'p4c',part:4,type:'qa',icon:'🍎',label:'Unit 2 數量',q:'How many apples do you need?',model:'I need three apples.',
+   answers:NUMW.map(n=>`I need ${n} apples.`),others:['I need two apples.','I need four apples.']},
+  {id:'p4d',part:4,type:'qa',icon:'🍊',label:'Unit 2 數量',q:'How many oranges do you need?',model:'I need five oranges.',
+   answers:NUMW.map(n=>`I need ${n} oranges.`),others:['I need six oranges.','I need two oranges.']},
+  // Part 5
+  {id:'p5a',part:5,type:'phon',icon:'🚪',label:'Card A',words:['gate','rain','see','bike']},
+  {id:'p5b',part:5,type:'phon',icon:'🥧',label:'Card B',words:['wave','day','tea','pie']},
+  {id:'p5c',part:5,type:'phon',icon:'🦶',label:'Card C',words:['bake','play','feet','night']},
+  {id:'p5d',part:5,type:'phon',icon:'🚂',label:'Card D',words:['game','train','green','bite']}
+];
+const RULES = [
+  {tag:'a_e',ipa:'/eɪ/',tip:'字尾 e 不發音，a 唸成字母 A 的音'},
+  {tag:'ai / ay',ipa:'/eɪ/',tip:'唸成字母 A 的音，要從 e 滑到 ɪ'},
+  {tag:'ee / ea',ipa:'/i/',tip:'長音 e，嘴角往兩邊拉、拉長'},
+  {tag:'i_e / ie / igh',ipa:'/aɪ/',tip:'唸成字母 I 的音；igh 的 gh 不發音'}
+];
+
+/* ================= 文字比對 ================= */
+const CONTR = {"i'm":"i am","im":"i am","don't":"do not","dont":"do not","doesn't":"does not","doesnt":"does not",
+  "let's":"let us","lets":"let us","it's":"it is","can't":"can not","cannot":"can not","okay":"ok","o.k.":"ok"};
+const NUMS = {'1':'one','2':'two','3':'three','4':'four','5':'five','6':'six','7':'seven','8':'eight','9':'nine','10':'ten'};
+// 發音相同的字視為相同（辨識引擎常把同音字寫成別的拼法）
+const HOMO = {to:'two',too:'two','for':'four',sea:'see',c:'see',t:'tea',tee:'tea',pi:'pie',byte:'bite',bight:'bite',
+  knight:'night',nite:'night',feat:'feet',reign:'rain',rein:'rain',waive:'wave',gait:'gate',dey:'day',teacher:'teacher'};
+function norm(s){
+  s = (s||'').toLowerCase().replace(/[’‘`]/g,"'").replace(/o\.k\./g,'ok').replace(/[^a-z0-9' ]+/g,' ');
+  let out=[];
+  s.split(/\s+/).filter(Boolean).forEach(t=>{
+    if(CONTR[t]) out.push(...CONTR[t].split(' '));
+    else out.push(t.replace(/'/g,''));
+  });
+  return out.map(t=>NUMS[t]||HOMO[t]||t).filter(Boolean);
+}
+function align(target, spoken){
+  const n=target.length, m=spoken.length;
+  const dp=Array.from({length:n+1},()=>new Array(m+1).fill(0));
+  for(let i=n-1;i>=0;i--) for(let j=m-1;j>=0;j--)
+    dp[i][j] = target[i]===spoken[j] ? dp[i+1][j+1]+1 : Math.max(dp[i+1][j],dp[i][j+1]);
+  const ok=new Array(n).fill(false); let i=0,j=0;
+  while(i<n&&j<m){ if(target[i]===spoken[j]){ok[i]=true;i++;j++;} else if(dp[i+1][j]>=dp[i][j+1]) i++; else j++; }
+  return {ok, ratio: n? dp[0][0]/n : 0};
+}
+function starsFor(r){ return r>=0.999?3: r>=0.6?2: r>=0.25?1:0; }
+function gradeSentence(item, transcript){
+  const spoken = norm(transcript);
+  const answers = item.type==='read' ? [item.sentences.join(' ')] : item.answers;
+  let best=null;
+  answers.forEach(a=>{
+    const words = a.replace(/[.?!,]/g,' ').split(/\s+/).filter(Boolean); // 顯示用原字
+    const tnorm = norm(a);
+    const r = align(tnorm, spoken);
+    if(!best || r.ratio>best.ratio || (r.ratio===best.ratio && tnorm.length>best.tnorm.length))
+      best={answer:a, words, tnorm, ...r};
+  });
+  best.stars = spoken.length? starsFor(best.ratio) : 0;
+  best.spoken = spoken;
+  best.tips = makeTips(best, spoken, item);
+  return best;
+}
+function makeTips(b, spoken, item){
+  const tips=[]; const has=w=>spoken.includes(w);
+  if(!spoken.length){ tips.push('沒有聽到聲音。請靠近麥克風、大聲一點再試一次。'); return tips; }
+  const missing = b.tnorm.filter((w,i)=>!b.ok[i]);
+  if(missing.includes('likes') && has('like')) tips.push('主詞是 He / She 時要說 <b>likes</b>（加 s）。');
+  if(missing.includes('needs') && has('need')) tips.push('主詞是 He / She 時要說 <b>needs</b>（加 s）。');
+  if(missing.includes('does') && has('do')) tips.push('He / She 的否定要用 <b>doesn\'t</b>，不是 don\'t。');
+  missing.forEach(w=>{
+    if(w.length>3 && w.endsWith('s') && !['likes','needs','does'].includes(w) && has(w.slice(0,-1)))
+      tips.push(`複數要把字尾唸出來：<b>${w}</b>，不是 ${w.slice(0,-1)}。`);
+  });
+  if(spoken.length<=2 && b.tnorm.length>=3 && item.type!=='read') tips.push('請用<b>完整的句子</b>回答，不要只說一兩個字。');
+  if(b.stars===3) tips.unshift('太棒了！句子完整又正確 🎉');
+  else if(!tips.length && missing.length) tips.push('紅色的字沒有被聽到，請聽一次示範，再把這幾個字唸清楚。');
+  return tips;
+}
+function gradePhonics(item, alts){
+  const pool = new Set(alts.flatMap(a=>norm(a)));
+  const ok = item.words.map(w=>pool.has(w));
+  const c = ok.filter(Boolean).length;
+  const stars = c===4?3: c===3?2: c>=1?1:0;
+  const tips=[];
+  if(!alts.length) tips.push('沒有聽到聲音。請靠近麥克風、一個字一個字慢慢唸。');
+  else if(c===4) tips.push('4 個字都聽得出來 🎉 再請家長聽一下長母音有沒有唸飽滿。');
+  else tips.push('紅色的字沒有被認出來。點一下那個字聽發音，對照下面的規則再唸一次。');
+  return {ok, stars, tips, heard: alts[0]||''};
+}
+
+/* ================= 語音：朗讀 ================= */
+let RATE = 1, VOICE = null;
+function pickVoice(){
+  const vs = speechSynthesis.getVoices().filter(v=>/^en[-_]US/i.test(v.lang));
+  VOICE = vs.find(v=>/Google US English/i.test(v.name)) || vs.find(v=>/Samantha|Aria|Jenny|Zira/i.test(v.name)) || vs[0] || null;
+}
+if('speechSynthesis' in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function speak(text, onend){
+  if(!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang='en-US'; u.rate=RATE; if(VOICE) u.voice=VOICE;
+  if(onend) u.onend=onend;
+  speechSynthesis.speak(u);
+}
+function speakList(list){ let i=0; const next=()=>{ if(i<list.length) speak(list[i++], ()=>setTimeout(next,450)); }; next(); }
+
+/* ================= 語音：辨識 ================= */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let active = null;
+function listen({onInterim, onDone, onError}){
+  if(active){ active.stop(); return null; }
+  speechSynthesis && speechSynthesis.cancel();
+  const r = new SR();
+  r.lang='en-US'; r.interimResults=true; r.continuous=true; r.maxAlternatives=5;
+  const finals=[], alts=[]; let silence=null, heardAny=false;
+  const maxT = setTimeout(()=>r.stop(), 15000);
+  const arm = ()=>{ clearTimeout(silence); silence=setTimeout(()=>r.stop(), heardAny?1800:6000); };
+  arm();
+  r.onresult = e=>{
+    let interim='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const res=e.results[i];
+      if(res.isFinal){ finals.push(res[0].transcript); for(let k=0;k<res.length;k++) alts.push(res[k].transcript); }
+      else interim += res[0].transcript;
+    }
+    heardAny=true; arm();
+    onInterim && onInterim((finals.join(' ')+' '+interim).trim());
+  };
+  let err=null;
+  r.onerror = e=>{ err=e.error; };
+  r.onend = ()=>{
+    clearTimeout(silence); clearTimeout(maxT); active=null;
+    if(err && err!=='no-speech' && err!=='aborted'){ onError && onError(err); return; }
+    onDone({text: finals.join(' ').trim(), alts});
+  };
+  try{ r.start(); active=r; }catch(e){ onError && onError('start'); return null; }
+  return r;
+}
+function errMsg(code){
+  if(code==='not-allowed'||code==='service-not-allowed')
+    return '麥克風被擋住了。請按網址列左邊的圖示，把「麥克風」改成允許，再重新整理頁面。（如果是在 Claude 對話裡直接預覽，請先下載檔案，再用 Chrome 打開。）';
+  if(code==='network') return '語音辨識需要連上網路，請確認網路後再試一次。';
+  if(code==='audio-capture') return '找不到麥克風，請確認麥克風或耳機有接好。';
+  return '語音辨識發生問題（'+code+'），請再試一次。';
+}
+
+/* ================= 進度記錄 ================= */
+const KEY='g5-oral-progress-v1';
+let PROG={};
+try{ PROG = JSON.parse(localStorage.getItem(KEY)||'{}')||{}; }catch(e){ PROG={}; }
+function saveStar(id, s){
+  if((PROG[id]||0) < s) PROG[id]=s;
+  try{ localStorage.setItem(KEY, JSON.stringify(PROG)); }catch(e){}
+}
+const starStr = s=> '⭐'.repeat(s) + '☆'.repeat(3-s);
+
+/* ================= 畫面：題目卡 ================= */
+const esc = s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+function el(html){ const d=document.createElement('div'); d.innerHTML=html.trim(); return d.firstChild; }
+
+function renderCard(item, opts={}){
+  const best = PROG[item.id]||0;
+  let body='';
+  if(item.type==='qa'){
+    body = `<div class="bubble t"><div><span class="who">TEACHER 老師問</span><span class="txt">${esc(item.q)}</span></div>
+              <button class="say" data-say="${esc(item.q)}" title="聽題目">🔊</button></div>
+            <details><summary>💡 看答案提示</summary>
+              <div style="margin-top:6px"><b>示範：</b>${esc(item.model)} <button class="say" style="width:28px;height:28px;font-size:13px" data-say="${esc(item.model)}">🔊</button></div>
+              ${item.others.length?`<div class="muted" style="margin-top:4px">其他也可以這樣說：</div><ul>${item.others.map(o=>`<li>${esc(o)}</li>`).join('')}</ul>`:''}
+            </details>`;
+  } else if(item.type==='read'){
+    body = item.sentences.map((s,i)=>`<div class="sent"><span>${i+1}. ${esc(s)}</span><button class="say" data-say="${esc(s)}">🔊</button></div>`).join('');
+  } else if(item.type==='pic'){
+    const L=item.left, R=item.right;
+    body = `<div class="scene">
+              <div><span class="mark">${L.mark}</span>${L.who} ${L.thing}<span class="cap">${L.cap}</span></div>
+              <div>${R.html}${R.cap?`<span class="cap">${R.cap}</span>`:''}</div>
+            </div>
+            <div class="muted">看圖說兩句：①${L.mark==='🚫'?'他／她不喜歡什麼':'他／她喜歡什麼'}　②需要幾個（自己數一數）</div>
+            <details><summary>💡 看參考答案</summary>
+              <div style="margin-top:6px">${esc(item.model)} <button class="say" style="width:28px;height:28px;font-size:13px" data-say="${esc(item.model)}">🔊</button></div>
+              <div class="muted">參考答案由圖片推出，請再對照學校網站的文字稿。</div>
+            </details>`;
+  } else if(item.type==='phon'){
+    body = `<div class="words">${item.words.map((w,i)=>`<span class="word" data-w="${w}" data-say="${w}">🔊 ${w} <small>${RULES[i].tag}</small></span>`).join('')}</div>
+            <details><summary>📖 發音規則</summary><ul>${RULES.map((r,i)=>`<li><b>${r.tag}</b> ${r.ipa}：${r.tip}（第 ${i+1} 個字）</li>`).join('')}</ul></details>`;
+  }
+  const modelBtn = item.type==='read' ? `<button class="btn" data-act="model">👂 聽示範</button>`
+                 : item.type==='phon' ? `<button class="btn" data-act="model">👂 依序聽 4 個字</button>`
+                 : item.type==='pic' ? `<button class="btn" data-act="model">👂 聽參考答案</button>`
+                 : `<button class="btn" data-act="q">🔊 再聽一次題目</button>`;
+  const card = el(`<div class="card ${opts.big?'big':''}">
+    <div class="chead"><span class="ic">${item.type==='pic'?'🖼️':item.icon}</span><span class="lb">${esc(item.label)}</span>
+      <span class="st" title="最佳紀錄">${starStr(best)}</span></div>
+    ${body}
+    <div class="acts">
+      <button class="btn mic" data-act="mic" ${SR?'':'disabled'}>🎤 開始回答</button>
+      ${modelBtn}
+    </div>
+    <div class="listen">● 正在聽…說完會自動停止（也可以再按一次按鈕結束）<div class="interim muted"></div></div>
+    <div class="result"></div>
+  </div>`);
+
+  const resBox = card.querySelector('.result'), lis = card.querySelector('.listen'), mic = card.querySelector('[data-act=mic]');
+  card.querySelectorAll('[data-say]').forEach(b=>b.addEventListener('click',()=>speak(b.dataset.say)));
+  const q = card.querySelector('[data-act=q]'); if(q) q.onclick=()=>speak(item.q);
+  const md = card.querySelector('[data-act=model]');
+  if(md) md.onclick=()=>{
+    if(item.type==='read') speakList(item.sentences);
+    else if(item.type==='phon') speakList(item.words);
+    else speakList(item.model.split(/(?<=[.?!])\s+/));
+  };
+
+  const finish = (stars, html, cls, parentBtn=true)=>{
+    resBox.className='result show '+cls;
+    resBox.innerHTML = html + (parentBtn && stars<3 ? `<div class="parent"><button class="btn" data-act="parent">👨‍👩‍👧 家長判定：其實答對了</button></div>`:'');
+    saveStar(item.id, stars);
+    card.querySelector('.st').textContent = starStr(PROG[item.id]||0);
+    opts.onGraded && opts.onGraded(stars);
+    const pb = resBox.querySelector('[data-act=parent]');
+    if(pb) pb.onclick=()=>{ saveStar(item.id,3); card.querySelector('.st').textContent=starStr(3);
+      pb.parentNode.innerHTML='<span class="w-ok">✔ 已由家長判定為正確</span>'; opts.onGraded && opts.onGraded(3, true); };
+    opts.onAfter && opts.onAfter();
+  };
+
+  mic.onclick = ()=>{
+    if(active){ active.stop(); return; }
+    resBox.className='result';
+    const r = listen({
+      onInterim: t=>{ card.querySelector('.interim').textContent=t; },
+      onError: code=>{ mic.classList.remove('rec'); mic.textContent='🎤 開始回答'; lis.classList.remove('show');
+        resBox.className='result show bad'; resBox.innerHTML=errMsg(code); },
+      onDone: ({text, alts})=>{
+        mic.classList.remove('rec'); mic.textContent='🎤 再試一次'; lis.classList.remove('show');
+        if(item.type==='phon'){
+          const g = gradePhonics(item, alts);
+          card.querySelectorAll('.word').forEach((w,i)=>{ w.classList.remove('ok','miss'); if(alts.length) w.classList.add(g.ok[i]?'ok':'miss'); });
+          finish(g.stars, `<div class="stars">${starStr(g.stars)}</div>
+            <div class="heard">電腦聽到：「${esc(g.heard)||'（沒有聽到）'}」</div>
+            <div class="target">${item.words.map((w,i)=>`<span class="${g.ok[i]?'w-ok':'w-miss'}">${w}</span>`).join('　')}</div>
+            <ul>${g.tips.map(t=>`<li>${t}</li>`).join('')}</ul>`, g.stars===3?'good':g.stars>=2?'mid':'bad');
+        } else {
+          const g = gradeSentence(item, text);
+          let k=0; // 把原字和比對結果對起來（縮寫會展開成兩個字）
+          const shown = g.words.map(w=>{ const n=norm(w).length||1; const ok=g.ok.slice(k,k+n).every(Boolean); k+=n; return `<span class="${ok?'w-ok':'w-miss'}">${esc(w)}</span>`; }).join(' ');
+          finish(g.stars, `<div class="stars">${starStr(g.stars)}</div>
+            <div class="heard">電腦聽到：「${esc(text)||'（沒有聽到）'}」</div>
+            <div class="target">對照：${shown}</div>
+            <ul>${g.tips.map(t=>`<li>${t}</li>`).join('')}</ul>`, g.stars===3?'good':g.stars>=2?'mid':'bad');
+        }
+      }
+    });
+    if(r){ mic.classList.add('rec'); mic.textContent='⏹ 說完了'; lis.classList.add('show'); card.querySelector('.interim').textContent=''; }
+  };
+  if(opts.autoQuestion){ if(item.type==='qa') setTimeout(()=>speak(item.q),250);
+    else if(item.type==='pic') setTimeout(()=>speak('Look at the picture. Please say two sentences.'),250); }
+  return card;
+}
+
+/* ================= 分項練習 ================= */
+let curPart=1, mode='practice';
+const main=document.getElementById('main');
+function partProgress(n){ const its=ITEMS.filter(i=>i.part===n); return its.filter(i=>(PROG[i.id]||0)===3).length+'/'+its.length+' ⭐'; }
+function renderPractice(){
+  main.innerHTML='';
+  const tabs = el(`<div class="parts">${PARTS.map(p=>`<button data-p="${p.n}" class="${p.n===curPart?'on':''}"><b>${p.name}</b><span>${p.short}・${partProgress(p.n)}</span></button>`).join('')}</div>`);
+  tabs.querySelectorAll('button').forEach(b=>b.onclick=()=>{ curPart=+b.dataset.p; renderPractice(); });
+  main.appendChild(tabs);
+  const p=PARTS[curPart-1];
+  main.appendChild(el(`<div class="parthead"><h2>${p.name}: ${esc(p.title)}（配分 4 分）</h2><p>${esc(p.desc)}</p></div>`));
+  const grid=el('<div class="grid"></div>');
+  ITEMS.filter(i=>i.part===curPart).forEach(it=>grid.appendChild(renderCard(it,{onAfter:()=>{
+    tabs.querySelectorAll('button').forEach(b=>b.querySelector('span').textContent=PARTS[b.dataset.p-1].short+'・'+partProgress(+b.dataset.p));
+  }})));
+  main.appendChild(grid);
+}
+
+/* ================= 模擬口試 ================= */
+const PTS = {3:4, 2:3, 1:1, 0:0};
+let mock=null;
+function renderMock(){
+  main.innerHTML='';
+  if(!mock){
+    main.appendChild(el(`<div class="card big"><h2 style="margin:0">📝 模擬口試</h2>
+      <p>每個部分隨機抽一題，總共 5 題，跟真正的口試一樣。每題都可以重答，最後會算出估計分數（滿分 20 分）。</p>
+      <p class="muted">建議：家長坐在旁邊一起聽，電腦判斷不準時可以按「家長判定」。</p>
+      <div><button class="btn primary" id="startMock">開始模擬口試 ▶</button></div></div>`));
+    document.getElementById('startMock').onclick=()=>{
+      mock={idx:0, items:PARTS.map(p=>{const its=ITEMS.filter(i=>i.part===p.n); return its[Math.floor(Math.random()*its.length)];}), score:[null,null,null,null,null], parent:[false,false,false,false,false]};
+      renderMock();
+    };
+    return;
+  }
+  if(mock.idx>=5){ renderSummary(); return; }
+  const it=mock.items[mock.idx], p=PARTS[it.part-1];
+  main.appendChild(el(`<div class="mock-top"><b>第 ${mock.idx+1} / 5 題　${p.name} ${esc(p.title)}</b><span class="muted">${esc(p.short)}</span></div>`));
+  main.appendChild(el(`<div class="prog"><div style="width:${mock.idx*20}%"></div></div>`));
+  main.appendChild(el(`<div class="parthead" style="max-width:620px;margin:0 auto 12px"><p style="margin:0">${esc(p.desc)}</p></div>`));
+  const card=renderCard(it,{big:true, autoQuestion:true, onGraded:(s,par)=>{ mock.score[mock.idx]=s; if(par) mock.parent[mock.idx]=true; }});
+  main.appendChild(card);
+  const nav=el(`<div style="max-width:620px;margin:12px auto 0;display:flex;justify-content:space-between">
+     <button class="btn" id="quitMock">結束模擬</button>
+     <button class="btn primary" id="nextMock">${mock.idx===4?'看成績 🏁':'下一題 →'}</button></div>`);
+  main.appendChild(nav);
+  document.getElementById('nextMock').onclick=()=>{ if(active) active.stop(); mock.idx++; renderMock(); };
+  document.getElementById('quitMock').onclick=()=>{ if(active) active.stop(); mock=null; renderMock(); };
+}
+function renderSummary(){
+  let total=0;
+  const rows = mock.items.map((it,i)=>{ const s=mock.score[i]; const pts = s==null?0:PTS[s]; total+=pts; const p=PARTS[it.part-1];
+    return `<tr><td>${p.name}<br><span class="muted">${esc(p.short)}</span></td><td>${esc(it.label)}</td><td>${s==null?'<span class="w-miss">沒有作答</span>':starStr(s)}${mock.parent[i]?'<br><span class="muted">家長判定</span>':''}</td><td><b>${pts}</b> / 4</td></tr>`; }).join('');
+  const weak = mock.items.filter((it,i)=>(mock.score[i]||0)<3).map(it=>PARTS[it.part-1].name+' '+it.label);
+  main.appendChild(el(`<div class="card big"><h2 style="margin:0">🏁 模擬口試成績</h2>
+    <div>估計分數：<span class="total">${total}</span> / 20</div>
+    <table><tr><th>部分</th><th>題目</th><th>表現</th><th>分數</th></tr>${rows}</table>
+    ${weak.length?`<div><b>建議再加強：</b>${weak.map(esc).join('、')}<br><span class="muted">可以到「分項練習」找這些題目多練幾次。</span></div>`:'<div class="w-ok">全部滿分！可以換一組題目再挑戰一次 🎉</div>'}
+    <div class="muted">估計分數是依電腦辨識換算的（3 顆星 4 分、2 顆星 3 分、1 顆星 1 分），只供練習參考，實際以老師評分為準。</div>
+    <div class="acts"><button class="btn primary" id="again">再考一次（重新抽題）</button></div></div>`));
+  document.getElementById('again').onclick=()=>{ mock=null; renderMock(); };
+}
+
+/* ================= 使用說明 ================= */
+function renderHelp(){
+  main.innerHTML='';
+  main.appendChild(el(`<div class="card help">
+    <h2 style="margin:0">👨‍👩‍👧 使用說明</h2>
+    <h3>開始之前</h3>
+    <ul>
+      <li>請用<b>電腦版 Chrome 或 Edge</b> 開啟這個檔案。第一次按「🎤 開始回答」時，瀏覽器會詢問是否允許麥克風，請按「允許」。</li>
+      <li>語音辨識需要連上網路。安靜的房間、靠近麥克風或戴耳機麥克風，辨識會準很多。</li>
+      <li>手機上的支援度不一：Android 的 Chrome 通常可以用；iPhone 不一定穩定。</li>
+    </ul>
+    <h3>每題的練習流程</h3>
+    <ol>
+      <li>先按 🔊 聽題目（覺得太快就把上方語速調到 0.8x 或 0.6x）。</li>
+      <li>按 🎤 開始回答，說完停一下，電腦會自動結束並比對。</li>
+      <li>看結果：<span class="w-ok">綠色</span>的字是有被聽到的，<span class="w-miss">紅色</span>的字是漏掉或唸錯的，下面會寫出要改的地方。</li>
+      <li>不會的時候再打開「💡 看答案提示」或按 👂 聽示範，跟著唸幾次再答一次。</li>
+    </ol>
+    <h3>建議的練習安排（每天約 15 分鐘）</h3>
+    <table>
+      <tr><th>天數</th><th>練什麼</th></tr>
+      <tr><td>第 1 天</td><td>Part 1 問候＋Part 5 發音</td></tr>
+      <tr><td>第 2 天</td><td>Part 2 朗讀句子</td></tr>
+      <tr><td>第 3 天</td><td>Part 4 句型問答</td></tr>
+      <tr><td>第 4 天</td><td>Part 3 看圖描述</td></tr>
+      <tr><td>第 5 天</td><td>回到還沒有 3 顆星的題目加強（分項練習上方會顯示每部分拿到幾題滿分）</td></tr>
+      <tr><td>考前 2–3 天</td><td>每天做一次「模擬口試」</td></tr>
+    </table>
+    <h3>電腦辨識的限制（請家長一定要看）</h3>
+    <ul>
+      <li>語音辨識會自動「猜」成合理的句子。孩子說 <i>three apple</i>，電腦有時會寫成 <i>three apples</i>，所以<b>小錯誤不一定抓得到</b>。</li>
+      <li>它能判斷「有沒有說完整、有沒有漏字、聽不聽得懂」，但<b>不能細到判斷發音標不標準</b>（例如 gate 的 /eɪ/ 有沒有唸飽滿）。</li>
+      <li>小孩的聲音辨識率比大人低。孩子明明說對、電腦卻判錯時，請按「家長判定：其實答對了」。</li>
+    </ul>
+    <h3>家長檢核表（每週聽孩子做一次整份模擬）</h3>
+    <ul>
+      <li>☐ Part 1：回答「Where are you? / What are you doing?」時有用 <b>I'm in the… / I'm …ing</b> 的完整句子</li>
+      <li>☐ Part 2：<b>She likes / He likes / He needs</b> 的 s 有唸出來；apple<b>s</b>、orange<b>s</b> 的字尾有唸出來</li>
+      <li>☐ Part 2：<i>Do you like juice?</i> 句尾<b>上揚</b>，其他句子句尾下降</li>
+      <li>☐ Part 3：會說 <b>doesn't like</b>（不是 don't like），會自己數數量並加複數 s</li>
+      <li>☐ Part 4：會用 <b>Yes, I do. / No, I don't.</b> 回答，數量題說完整的 <b>I need + 數字 + 複數</b></li>
+      <li>☐ Part 5：gate 不唸成 get；bike、night 唸成 /aɪ/；see、green 的 ee 有拉長；night 的 gh 不發音</li>
+    </ul>
+    <p class="muted">題目內容整理自學校「西勢英語口試練習網」五年級頁面；Part 3 的參考答案是依圖片推出的，請以學校網站的文字稿為準。</p>
+  </div>`));
+}
+
+/* ================= 初始化 ================= */
+function render(){ if(active) active.stop(); speechSynthesis && speechSynthesis.cancel();
+  if(mode==='practice') renderPractice(); else if(mode==='mock') renderMock(); else renderHelp(); }
+document.querySelectorAll('.modes button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.modes button').forEach(x=>x.classList.toggle('on',x===b)); mode=b.dataset.m; render(); });
+document.querySelectorAll('#rateSeg button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#rateSeg button').forEach(x=>x.classList.toggle('on',x===b)); RATE=+b.dataset.r; speak('This is the speed.'); });
+const banner=document.getElementById('srBanner');
+if(!SR) banner.innerHTML='<div class="banner warn">⚠️ 這個瀏覽器不支援語音辨識，麥克風按鈕無法使用（仍然可以聽題目、看答案）。請改用<b>電腦版 Chrome 或 Edge</b> 開啟這個檔案。</div>';
+else banner.innerHTML='<div class="banner info">✅ 可以使用語音辨識。第一次按「🎤 開始回答」時請允許使用麥克風。</div>';
+render();
+</script>
+</body>
+</html>
