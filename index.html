@@ -415,6 +415,15 @@ function renderCard(item, opts={}){
     <div class="acts">
       <button class="btn mic" data-act="mic" ${SR?'':'disabled'}>🎤 開始回答</button>
       ${modelBtn}
+      <button class="btn" data-act="kb">⌨️ 鍵盤聽寫</button>
+    </div>
+    <div class="typed" style="display:none">
+      <div class="muted">點下面的框框，再按鍵盤上的 🎤 麥克風說英文；說完按「比對答案」。（也可以直接打字）</div>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <input type="text" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" lang="en"
+          placeholder="例如：I'm in the kitchen." style="flex:1;font-size:17px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:10px">
+        <button class="btn primary" data-act="check">比對答案</button>
+      </div>
     </div>
     <div class="listen">● 正在聽…說完會自動停止（也可以再按一次按鈕結束）<div class="interim muted"></div></div>
     <div class="result"></div>
@@ -442,35 +451,46 @@ function renderCard(item, opts={}){
     opts.onAfter && opts.onAfter();
   };
 
+  const showResult = (text, alts)=>{
+        if(item.type==='phon'){
+      const g = gradePhonics(item, alts);
+      card.querySelectorAll('.word').forEach((w,i)=>{ w.classList.remove('ok','miss'); if(alts.length) w.classList.add(g.ok[i]?'ok':'miss'); });
+      finish(g.stars, `<div class="stars">${starStr(g.stars)}</div>
+        <div class="heard">電腦聽到：「${esc(g.heard)||'（沒有聽到）'}」</div>
+        <div class="target">${item.words.map((w,i)=>`<span class="${g.ok[i]?'w-ok':'w-miss'}">${w}</span>`).join('　')}</div>
+        <ul>${g.tips.map(t=>`<li>${t}</li>`).join('')}</ul>`, g.stars===3?'good':g.stars>=2?'mid':'bad');
+    } else {
+      const g = gradeSentence(item, text);
+      let k=0; // 把原字和比對結果對起來（縮寫會展開成兩個字）
+      const shown = g.words.map(w=>{ const n=norm(w).length||1; const ok=g.ok.slice(k,k+n).every(Boolean); k+=n; return `<span class="${ok?'w-ok':'w-miss'}">${esc(w)}</span>`; }).join(' ');
+      finish(g.stars, `<div class="stars">${starStr(g.stars)}</div>
+        <div class="heard">電腦聽到：「${esc(text)||'（沒有聽到）'}」</div>
+        <div class="target">對照：${shown}</div>
+        <ul>${g.tips.map(t=>`<li>${t}</li>`).join('')}</ul>`, g.stars===3?'good':g.stars>=2?'mid':'bad');
+    }
+  };
   mic.onclick = ()=>{
     if(active){ active.stop(); mic.textContent='⏳ 處理中…'; return; }
     resBox.className='result';
     const r = listen({
       onInterim: t=>{ card.querySelector('.interim').textContent=t; },
       onError: code=>{ mic.classList.remove('rec'); mic.textContent='🎤 開始回答'; lis.classList.remove('show');
-        resBox.className='result show bad'; resBox.innerHTML=errMsg(code); },
+        resBox.className='result show bad'; resBox.innerHTML=errMsg(code)+'<div style="margin-top:6px"><b>先用「⌨️ 鍵盤聽寫」練習：</b>點下面的框框，按鍵盤上的 🎤 說英文，再按「比對答案」。</div>'; openKb(); },
       onDone: ({text, alts})=>{
         mic.classList.remove('rec'); mic.textContent='🎤 再試一次'; lis.classList.remove('show');
-        if(item.type==='phon'){
-          const g = gradePhonics(item, alts);
-          card.querySelectorAll('.word').forEach((w,i)=>{ w.classList.remove('ok','miss'); if(alts.length) w.classList.add(g.ok[i]?'ok':'miss'); });
-          finish(g.stars, `<div class="stars">${starStr(g.stars)}</div>
-            <div class="heard">電腦聽到：「${esc(g.heard)||'（沒有聽到）'}」</div>
-            <div class="target">${item.words.map((w,i)=>`<span class="${g.ok[i]?'w-ok':'w-miss'}">${w}</span>`).join('　')}</div>
-            <ul>${g.tips.map(t=>`<li>${t}</li>`).join('')}</ul>`, g.stars===3?'good':g.stars>=2?'mid':'bad');
-        } else {
-          const g = gradeSentence(item, text);
-          let k=0; // 把原字和比對結果對起來（縮寫會展開成兩個字）
-          const shown = g.words.map(w=>{ const n=norm(w).length||1; const ok=g.ok.slice(k,k+n).every(Boolean); k+=n; return `<span class="${ok?'w-ok':'w-miss'}">${esc(w)}</span>`; }).join(' ');
-          finish(g.stars, `<div class="stars">${starStr(g.stars)}</div>
-            <div class="heard">電腦聽到：「${esc(text)||'（沒有聽到）'}」</div>
-            <div class="target">對照：${shown}</div>
-            <ul>${g.tips.map(t=>`<li>${t}</li>`).join('')}</ul>`, g.stars===3?'good':g.stars>=2?'mid':'bad');
-        }
+        showResult(text, alts);
       }
     });
     if(r){ mic.classList.add('rec'); mic.textContent='⏹ 說完了'; lis.classList.add('show'); card.querySelector('.interim').textContent=''; }
   };
+  const typed = card.querySelector('.typed'), inp = typed.querySelector('input');
+  const openKb = ()=>{ typed.style.display='block'; };
+  card.querySelector('[data-act=kb]').onclick=()=>{ if(typed.style.display==='none'){ openKb(); inp.focus(); } else typed.style.display='none'; };
+  const doCheck = ()=>{ const t=inp.value.trim(); showResult(t, t?[t]:[]); };
+  card.querySelector('[data-act=check]').onclick=doCheck;
+  inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); doCheck(); } });
+  if(!SR) openKb();
+  card._openKb = openKb;
   if(opts.autoQuestion){ if(item.type==='qa') speak(item.q);
     else if(item.type==='pic') speak('Look at the picture. Please say two sentences.'); }
   return card;
@@ -542,8 +562,13 @@ function renderSummary(){
 /* ================= 使用說明 ================= */
 function renderHelp(){
   main.innerHTML='';
+  setTimeout(()=>{ const b=document.getElementById('diagBtn'); if(b) b.onclick=runDiag; },0);
   main.appendChild(el(`<div class="card help">
     <h2 style="margin:0">👨‍👩‍👧 使用說明</h2>
+    <h3>🔧 麥克風檢測</h3>
+    <p class="muted" style="margin:0">麥克風不能用時按這個按鈕，它會分別測試「麥克風」和「語音辨識」，告訴您是哪一個被擋住。</p>
+    <div style="margin:8px 0"><button class="btn primary" id="diagBtn">開始檢測</button></div>
+    <div id="diagOut" style="font-size:14px"></div>
     <h3>開始之前</h3>
     <ul>
       <li>請用<b>電腦版 Chrome 或 Edge</b> 開啟這個檔案。第一次按「🎤 開始回答」時，瀏覽器會詢問是否允許麥克風，請按「允許」。</li>
@@ -582,8 +607,41 @@ function renderHelp(){
       <li>☐ Part 4：會用 <b>Yes, I do. / No, I don't.</b> 回答，數量題說完整的 <b>I need + 數字 + 複數</b></li>
       <li>☐ Part 5：gate 不唸成 get；bike、night 唸成 /aɪ/；see、green 的 ee 有拉長；night 的 gh 不發音</li>
     </ul>
+    <p class="muted">iPhone / iPad 如果「🎤 開始回答」一直被擋住，可以改用每題的「⌨️ 鍵盤聽寫」：點框框後按鍵盤上的 🎤 說英文，再按「比對答案」，一樣會檢查對錯。</p>
     <p class="muted">題目內容整理自學校「西勢英語口試練習網」五年級頁面；Part 3 的參考答案是依圖片推出的，請以學校網站的文字稿為準。</p>
   </div>`));
+}
+
+async function runDiag(){
+  const out=document.getElementById('diagOut'); const lines=[];
+  const show=()=>{ out.innerHTML='<ul style="padding-left:20px;margin:0">'+lines.map(l=>'<li>'+l+'</li>').join('')+'</ul>'; };
+  lines.push('裝置：'+(IS_IOS?'iPhone / iPad':'其他')+'　瀏覽器：'+(/CriOS/.test(navigator.userAgent)?'Chrome (iOS)':/Line\//i.test(navigator.userAgent)?'LINE 內建瀏覽器':/FBAN|FBAV|Instagram/i.test(navigator.userAgent)?'Facebook／IG 內建瀏覽器':/Safari/.test(navigator.userAgent)&&!/Chrome/.test(navigator.userAgent)?'Safari':/Chrome/.test(navigator.userAgent)?'Chrome':'其他'));
+  if(window.navigator.standalone===true) lines.push('⚠️ 目前是從「主畫面圖示」開啟。iPhone 在這個模式下常常不能用語音辨識，請改用 Safari 直接打開網址。');
+  lines.push('網址是否安全（https）：'+(window.isSecureContext?'✅ 是':'❌ 否'));
+  lines.push('瀏覽器支援語音辨識：'+(SR?'✅ 支援':'❌ 不支援'));
+  show();
+  // 1. 麥克風
+  if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
+    try{ const st=await navigator.mediaDevices.getUserMedia({audio:true}); st.getTracks().forEach(t=>t.stop()); lines.push('麥克風：✅ 可以使用'); }
+    catch(e){ lines.push('麥克風：❌ 被擋住（'+e.name+'）→ 請到「設定」→「Safari」→「麥克風」改成允許，或點網址列「大小」→ 網站設定 → 麥克風。'); }
+  } else lines.push('麥克風：❌ 這個瀏覽器無法取用麥克風');
+  show();
+  // 2. 語音辨識
+  if(!SR){ lines.push('語音辨識：❌ 不支援，請改用「⌨️ 鍵盤聽寫」。'); show(); return; }
+  lines.push('語音辨識：測試中…請說一句英文，例如 hello'); show();
+  await new Promise(res=>{
+    let r; try{ r=new SR(); }catch(e){ lines[lines.length-1]='語音辨識：❌ 無法建立（'+e.name+'）'; return res(); }
+    r.lang='en-US'; r.interimResults=true; let ok=false, heard='', fin=false;
+    const end=(msg)=>{ if(fin) return; fin=true; try{r.abort();}catch(e){} lines[lines.length-1]=msg; res(); };
+    r.onstart=()=>{ ok=true; };
+    r.onresult=e=>{ heard=e.results[e.results.length-1][0].transcript; };
+    r.onerror=e=>end('語音辨識：❌ 被擋住（代碼：'+e.error+'）'+(e.error==='service-not-allowed'?' → 通常是 Siri 或聽寫被關掉，或「螢幕使用時間」限制了「Siri 與聽寫」。':e.error==='not-allowed'?' → 網站的麥克風權限被拒絕。':''));
+    r.onend=()=>end(heard?'語音辨識：✅ 可以使用，聽到「'+esc(heard)+'」':ok?'語音辨識：⚠️ 有啟動，但沒有聽到聲音':'語音辨識：❌ 沒有啟動');
+    try{ r.start(); }catch(e){ end('語音辨識：❌ 無法啟動（'+e.name+'）'); }
+    setTimeout(()=>{ try{r.stop();}catch(e){} setTimeout(()=>end(heard?'語音辨識：✅ 可以使用，聽到「'+esc(heard)+'」':ok?'語音辨識：⚠️ 有啟動，但沒有聽到聲音':'語音辨識：❌ 沒有回應'),1200); },5000);
+  });
+  lines.push('檢測完成。如果還是不行，請把這個畫面截圖給協助您的人。');
+  show();
 }
 
 /* ================= 初始化 ================= */
