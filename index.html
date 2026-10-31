@@ -90,7 +90,42 @@
   .help h3{margin:18px 0 6px;font-size:17px}
   .help li{margin:3px 0}
   .muted{color:var(--muted);font-size:13px}
-  @media (max-width:640px){.parts{grid-template-columns:repeat(3,1fr)} h1{font-size:19px}}
+  .ltag{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.3px;margin-top:2px}
+  .ltag.t{color:var(--blue)} .ltag.s{color:var(--green)}
+  .lrow{display:flex;align-items:center;gap:6px;background:#f8fafc;border-radius:10px;padding:8px 10px}
+  .lrow.ans{background:var(--green-soft)}
+  .lsent{flex:1;min-width:0}
+  .len{font-size:18px;font-weight:600}
+  .lzh{font-size:14px;color:var(--muted)}
+  .lrow .say{width:32px;height:32px;font-size:15px;margin-left:0}
+  .tw{cursor:pointer;border-bottom:1px dotted #94a3b8}
+  .tw:hover{background:#fff1dc}
+  .lexp{font-size:14px;background:var(--accent-soft);border-radius:10px;padding:8px 10px}
+  .lexp.small{font-size:13px;background:#fffaf0}
+  .lpat{border:1px dashed #d6c7ad;border-radius:12px;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+  .patline{display:flex;flex-direction:column}
+  .pen{font-size:18px;font-weight:600}
+  .pzh{font-size:14px;color:var(--muted)}
+  .slot,.slotzh{color:#c2410c}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{border:1px solid #e5d3b3;background:#fff;border-radius:999px;padding:4px 10px;font:inherit;font-size:15px;cursor:pointer;display:inline-flex;gap:4px;align-items:baseline}
+  .chip small{color:var(--muted);font-size:12px}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .chip.on small{color:#fff}
+  .lnotes{margin:0;padding-left:20px;font-size:14px}
+  .gloss{background:#eef6ff;border-radius:10px;padding:6px 10px;font-size:14px}
+  .ldone{font-size:14px;color:var(--muted);display:flex;align-items:center;gap:6px;cursor:pointer;margin-top:auto}
+  .lcard.done{border-color:#86d3a0;background:#fbfffc}
+  .lcard.hide .ans .len{filter:blur(6px);cursor:pointer}
+  .lcard.hide .ans.peek .len{filter:none}
+  .lcard.hide .lpat{display:none}
+  .lhow{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:13px;color:var(--muted);margin-top:8px;align-items:center}
+  .pwords{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  .pword{border:1px solid #cbd5e1;background:#fff;border-radius:12px;padding:8px;font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center}
+  .pword b{font-size:24px;letter-spacing:1px}
+  .pword small{color:var(--muted)}
+  .hl{color:#c2410c;text-decoration:underline}
+  @media (max-width:640px){.parts{grid-template-columns:repeat(3,1fr)} h1{font-size:19px} .modes{flex-wrap:wrap} .modes button{flex:1 1 40%;font-size:15px;padding:10px}}
 </style>
 </head>
 <body>
@@ -112,9 +147,10 @@
   <div id="srBanner"></div>
 
   <div class="modes">
-    <button data-m="practice" class="on">📚 分項練習</button>
+    <button data-m="learn" class="on">📖 學習</button>
+    <button data-m="practice">📚 分項練習</button>
     <button data-m="mock">📝 模擬口試</button>
-    <button data-m="help">👨‍👩‍👧 使用說明＆家長檢核</button>
+    <button data-m="help">👨‍👩‍👧 家長說明</button>
   </div>
 
   <main id="main"></main>
@@ -276,14 +312,14 @@ if('speechSynthesis' in window){ pickVoice(); speechSynthesis.onvoiceschanged = 
 const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
 let curU = null, chain = 0;
 function stopSpeak(){ chain++; if('speechSynthesis' in window){ try{ speechSynthesis.cancel(); }catch(e){} } curU=null; }
-function speak(text, onend, keepChain){
+function speak(text, onend, keepChain, rate){
   if(!('speechSynthesis' in window)) return;
   if(!keepChain) chain++;
   const my = chain, ss = speechSynthesis;
   const go = ()=>{
     if(my!==chain) return;
     const u = new SpeechSynthesisUtterance(text);
-    u.lang='en-US'; u.rate=RATE;
+    u.lang='en-US'; u.rate=rate||RATE;
     if(VOICE && !IS_IOS) u.voice=VOICE;
     u.onend = ()=>{ if(curU===u) curU=null; if(onend && my===chain) onend(); };
     u.onerror = ()=>{ if(curU===u) curU=null; };
@@ -497,7 +533,7 @@ function renderCard(item, opts={}){
 }
 
 /* ================= 分項練習 ================= */
-let curPart=1, mode='practice';
+let curPart=1, mode='learn';
 const main=document.getElementById('main');
 function partProgress(n){ const its=ITEMS.filter(i=>i.part===n); return its.filter(i=>(PROG[i.id]||0)===3).length+'/'+its.length+' ⭐'; }
 function renderPractice(){
@@ -644,11 +680,235 @@ async function runDiag(){
   show();
 }
 
+/* ================= 學習分頁 ================= */
+const DICT = {
+  good:'好的',morning:'早上',teacher:'老師',how:'怎麼樣；如何',are:'是（you / we / they 用）',you:'你',today:'今天',
+  "i'm":'我是／我在（I am 的縮寫）',i:'我',fine:'很好',thank:'謝謝',ok:'還可以',not:'不',so:'那麼；很',
+  where:'哪裡',in:'在…裡面',the:'這個／那個（指特定的東西）',bedroom:'臥室',bathroom:'浴室；廁所',kitchen:'廚房',
+  dining:'用餐的',living:'起居的',room:'房間',what:'什麼',doing:'正在做',cooking:'正在煮飯',eating:'正在吃東西',
+  reading:'正在看書',sleeping:'正在睡覺',writing:'正在寫字',running:'正在跑步',
+  do:'（放在句首用來問問題）；做',like:'喜歡',likes:'喜歡（He / She 用，要加 s）',juice:'果汁',she:'她',coffee:'咖啡',
+  he:'他',tea:'茶',water:'水',is:'是（he / she / it 用）',best:'最好的',need:'需要',needs:'需要（He / She 用，要加 s）',
+  two:'二',three:'三',four:'四',five:'五',six:'六',apple:'蘋果',apples:'蘋果（複數）',"let's":'我們一起…吧（Let us 的縮寫）',
+  wash:'洗',our:'我們的',hands:'手（複數）',first:'先；首先',we:'我們',can:'可以；會',make:'做；製作',
+  orange:'柳橙；橘子',oranges:'柳橙（複數）',peel:'果皮',cleaner:'清潔劑',yes:'是的',no:'不',
+  "don't":'不（do not 的縮寫）',"doesn't":'不（does not 的縮寫，He / She 用）',milk:'牛奶',many:'很多（How many 是「多少個」）',
+  lemon:'檸檬',cola:'可樂',bananas:'香蕉（複數）',papayas:'木瓜（複數）',
+  gate:'大門',rain:'雨；下雨',see:'看見',bike:'腳踏車',wave:'揮手；波浪',day:'天；白天',pie:'派',bake:'烘烤',
+  play:'玩',feet:'腳（複數，一隻腳是 foot）',night:'晚上',game:'遊戲',train:'火車',green:'綠色',bite:'咬'
+};
+const S = (en,zh)=>({en,zh});
+const LEARN = {
+  1:[
+    {id:'l1a',icon:'🏫',title:'打招呼',q:S('Good morning!','早安！'),
+     explain:'老師跟你說早安，你也要說早安回去。最後加上 <b>Teacher</b>，聽起來比較有禮貌。',
+     a:[S('Good morning, Teacher!','老師早安！')],
+     notes:['morning 是「早上」，所以 Good morning 只在早上用。']},
+    {id:'l1b',icon:'😊',title:'問你好不好',q:S('How are you today?','你今天好嗎？'),
+     explain:'老師在問你今天過得怎麼樣、心情好不好。回答「我很好」之後，記得說 <b>thank you</b>。',
+     a:[S("I'm good, thank you.",'我很好，謝謝。')],
+     pattern:{tpl:"I'm {}, thank you.",zh:'我{}，謝謝。',opts:[['good','很好'],['fine','很好'],['OK','還可以']]},
+     extra:[S("I'm not so good.",'我不太好。')],
+     notes:["<b>I'm</b> 是 <b>I am</b> 的縮寫，意思是「我是／我…」。"]},
+    {id:'l1c',icon:'🛏️',title:'問你在哪裡',q:S('Where are you?','你在哪裡？'),
+     explain:'<b>Where</b> 是「哪裡」。老師在問你現在在哪一個房間。',
+     a:[S("I'm in the bedroom.",'我在臥室。')],
+     pattern:{tpl:"I'm in the {}.",zh:'我在{}。',opts:[['bedroom','臥室'],['bathroom','浴室'],['kitchen','廚房'],['dining room','餐廳'],['living room','客廳']]},
+     notes:['不要漏掉 <b>in the</b>：I\'m <b>in the</b> kitchen.','dining room 和 living room 是兩個字合起來的一個地方，要一起說。']},
+    {id:'l1d',icon:'🍳',title:'問你正在做什麼',q:S('What are you doing?','你正在做什麼？'),
+     explain:'<b>What</b> 是「什麼」，<b>doing</b> 是「正在做」。老師在問你<b>現在正在</b>做什麼，所以回答也要用 <b>I\'m + 動詞ing</b>。',
+     a:[S("I'm cooking.",'我正在煮飯。')],
+     pattern:{tpl:"I'm {}.",zh:'我正在{}。',opts:[['cooking','煮飯'],['eating','吃東西'],['reading','看書'],['sleeping','睡覺'],['writing','寫字'],['running','跑步']]},
+     notes:['write → writ<b>ing</b>：先去掉 e 再加 ing。','run → ru<b>nn</b>ing：要多寫一個 n。']}
+  ],
+  2:[
+    {id:'l2a',icon:'🧃☕',title:'Card A',sents:[
+      {...S('Do you like juice?','你喜歡果汁嗎？'),note:'<b>Do you like…?</b> 是問「你喜歡…嗎？」這是問句，句尾聲音要<b>往上揚 ↗</b>。'},
+      {...S('She likes coffee.','她喜歡咖啡。'),note:'主詞是 <b>She</b>（她），like 要加 s 變成 <b>likes</b>。'}]},
+    {id:'l2b',icon:'🍵💧',title:'Card B',sents:[
+      {...S('He likes tea.','他喜歡茶。'),note:'主詞是 <b>He</b>（他），一樣要說 <b>likes</b>。'},
+      {...S('Water is the best.','水是最好的。'),note:'<b>the best</b> 是「最好的」。'}]},
+    {id:'l2c',icon:'🍎🧼',title:'Card C',sents:[
+      {...S('He needs two apples.','他需要兩顆蘋果。'),note:'He 後面 need 要加 s → <b>needs</b>；兩顆以上要說 apple<b>s</b>。'},
+      {...S("Let's wash our hands first.",'我們先洗手吧。'),note:"<b>Let's</b> 是 Let us 的縮寫，意思是「我們一起…吧」。<b>first</b> 是「先」。"}]},
+    {id:'l2d',icon:'🍊🧽',title:'Card D',sents:[
+      {...S('We can make orange peel cleaner.','我們可以用橘子皮做清潔劑。'),note:'<b>orange peel</b> 是「橘子皮」，<b>cleaner</b> 是「清潔劑」。<b>can</b> 後面的動詞不加 s。'},
+      {...S('I need six oranges.','我需要六顆柳橙。'),note:'主詞是 <b>I</b>，need <b>不加</b> s。orange<b>s</b> 的結尾唸 /ɪz/，聽起來像「or-an-ges」。'}]}
+  ],
+  3:[
+    {id:'l3a',pic:'p3a',sents:[S("She doesn't like coffee.",'她不喜歡咖啡。'),S('She needs three apples.','她需要三顆蘋果。')]},
+    {id:'l3b',pic:'p3b',sents:[S('He likes lemon juice.','他喜歡檸檬汁。'),S('He needs five oranges.','他需要五顆柳橙。')]},
+    {id:'l3c',pic:'p3c',sents:[S('She likes tea.','她喜歡茶。'),S('She needs four bananas.','她需要四根香蕉。')]},
+    {id:'l3d',pic:'p3d',sents:[S("He doesn't like cola.",'他不喜歡可樂。'),S('He needs six papayas.','他需要六顆木瓜。')]}
+  ],
+  4:[
+    {id:'l4a',icon:'🧃',title:'問你喜不喜歡',q:S('Do you like juice?','你喜歡果汁嗎？'),
+     explain:'用 <b>Do</b> 開頭問「你喜歡…嗎？」，回答也要用 <b>do</b>：喜歡說 Yes, I do.，不喜歡說 No, I don\'t.',
+     a:[S('Yes, I do.','是的，我喜歡。'),S("No, I don't.",'不，我不喜歡。')],
+     extra:[S("No, I don't. I like milk.",'不，我不喜歡。我喜歡牛奶。')],
+     notes:["<b>don't</b> 是 do not 的縮寫。","不喜歡的時候，可以再多說一句自己喜歡什麼：I like milk."]},
+    {id:'l4b',icon:'☕',title:'問你喜不喜歡',q:S('Do you like coffee?','你喜歡咖啡嗎？'),
+     explain:'跟上一題一樣的問法。這題的示範是「不喜歡，再說自己喜歡什麼」。',
+     a:[S("No, I don't. I like tea.",'不，我不喜歡。我喜歡茶。')],
+     pattern:{tpl:"No, I don't. I like {}.",zh:'不，我不喜歡。我喜歡{}。',opts:[['tea','茶'],['milk','牛奶'],['water','水'],['juice','果汁']]},
+     extra:[S('Yes, I do.','是的，我喜歡。')],
+     notes:['問句裡說 <b>you</b>（你），回答要換成 <b>I</b>（我）。']},
+    {id:'l4c',icon:'🍎',title:'問你需要幾個',q:S('How many apples do you need?','你需要幾顆蘋果？'),
+     explain:'<b>How many</b> 是「多少個」。老師在問你需要幾顆蘋果，要用完整的句子回答。',
+     a:[S('I need three apples.','我需要三顆蘋果。')],
+     pattern:{tpl:'I need {} apples.',zh:'我需要{}顆蘋果。',opts:[['two','兩'],['three','三'],['four','四'],['five','五'],['six','六']]},
+     notes:['不要只說「Three.」，要說完整的 <b>I need three apples.</b>','兩顆以上要說 apple<b>s</b>，s 要唸出來。']},
+    {id:'l4d',icon:'🍊',title:'問你需要幾個',q:S('How many oranges do you need?','你需要幾顆柳橙？'),
+     explain:'跟蘋果那題一樣的問法，只是水果換成柳橙。',
+     a:[S('I need five oranges.','我需要五顆柳橙。')],
+     pattern:{tpl:'I need {} oranges.',zh:'我需要{}顆柳橙。',opts:[['two','兩'],['three','三'],['four','四'],['five','五'],['six','六']]},
+     notes:['orange<b>s</b> 的結尾唸 /ɪz/。']}
+  ],
+  5:[
+    {id:'l5a',title:'a_e　唸 /eɪ/（魔法 e）',pos:1,
+     explain:'字尾的 <b>e 不發音</b>，但它像魔法一樣，讓前面的 a 唸成字母 <b>A</b> 的名字 /eɪ/。',
+     words:[['gate','大門'],['wave','揮手'],['bake','烘烤'],['game','遊戲']]},
+    {id:'l5b',title:'ai / ay　唸 /eɪ/',pos:2,
+     explain:'兩個母音走在一起，<b>第一個說自己的名字</b>，所以 ai、ay 都唸字母 <b>A</b> 的音。ai 通常在字中間，ay 通常在字尾。',
+     words:[['rain','雨'],['day','天'],['play','玩'],['train','火車']]},
+    {id:'l5c',title:'ee / ea　唸 /i/',pos:3,
+     explain:'ee 和 ea 都唸字母 <b>E</b> 的名字 /i/。嘴角往兩邊拉，聲音<b>拉長</b>。',
+     words:[['see','看見'],['tea','茶'],['feet','腳'],['green','綠色']]},
+    {id:'l5d',title:'i_e / ie / igh　唸 /aɪ/',pos:4,
+     explain:'這三種拼法都唸字母 <b>I</b> 的名字 /aɪ/。i_e 的 e 不發音；igh 的 <b>gh 不發音</b>。',
+     words:[['bike','腳踏車'],['pie','派'],['night','晚上'],['bite','咬']]}
+  ]
+};
+const LKEY='g5-learned-v1';
+let LEARNED={};
+try{ LEARNED=JSON.parse(localStorage.getItem(LKEY)||'{}')||{}; }catch(e){ LEARNED={}; }
+function setLearned(id,v){ if(v) LEARNED[id]=1; else delete LEARNED[id]; try{ localStorage.setItem(LKEY,JSON.stringify(LEARNED)); }catch(e){} }
+let hideAns=false;
+
+// 英文句子拆成可以點的字：點一下唸出來，並在下方顯示中文意思
+function tapSentence(en){
+  return en.split(/\s+/).map(w=>{
+    const key=w.toLowerCase().replace(/[^a-z']/g,'');
+    return DICT[key] ? `<span class="tw" data-w="${esc(key)}">${esc(w)}</span>` : esc(w);
+  }).join(' ');
+}
+function sentRow(s, cls=''){
+  return `<div class="lrow ${cls}">
+    <div class="lsent"><div class="len">${tapSentence(s.en)}</div><div class="lzh">${esc(s.zh)}</div></div>
+    <button class="say" data-say="${esc(s.en)}" title="正常速度">🔊</button>
+    <button class="say" data-slow="${esc(s.en)}" title="慢速">🐢</button>
+  </div>`;
+}
+function learnCardHTML(it, part){
+  const done = !!LEARNED[it.id];
+  let h='';
+  if(part===1 || part===4){
+    h += `<div class="chead"><span class="ic">${it.icon}</span><span class="lb">${esc(it.title)}</span></div>
+      <div class="ltag t">老師問</div>${sentRow(it.q)}
+      <div class="lexp">💡 ${it.explain}</div>
+      <div class="ltag s">你可以這樣回答</div>${it.a.map(a=>sentRow(a,'ans')).join('')}`;
+    if(it.pattern){
+      const p=it.pattern, first=p.opts[0];
+      h += `<div class="lpat"><div class="ltag">換字練習：點下面的字，句子會跟著換</div>
+        <div class="patline"><span class="pen">${esc(p.tpl).replace('{}',`<b class="slot">${esc(first[0])}</b>`)}</span>
+          <span class="pzh">${esc(p.zh).replace('{}',`<b class="slotzh">${esc(first[1])}</b>`)}</span></div>
+        <div class="chips">${p.opts.map((o,i)=>`<button class="chip ${i===0?'on':''}" data-en="${esc(o[0])}" data-zh="${esc(o[1])}">${esc(o[0])}<small>${esc(o[1])}</small></button>`).join('')}</div></div>`;
+    }
+    if(it.extra) h += `<div class="ltag">也可以這樣說</div>${it.extra.map(a=>sentRow(a,'ans')).join('')}`;
+    if(it.notes) h += `<ul class="lnotes">${it.notes.map(n=>`<li>${n}</li>`).join('')}</ul>`;
+  } else if(part===2){
+    h += `<div class="chead"><span class="ic">${it.icon}</span><span class="lb">${esc(it.title)}</span></div>
+      ${it.sents.map((s,i)=>`${sentRow(s)}<div class="lexp small">📌 ${s.note}</div>`).join('')}`;
+  } else if(part===3){
+    const p=ITEMS.find(x=>x.id===it.pic), L=p.left, R=p.right;
+    const isShe = L.who==='👧', likes = L.mark==='❤️';
+    h += `<div class="chead"><span class="ic">🖼️</span><span class="lb">${esc(p.label)}</span></div>
+      <div class="scene"><div><span class="mark">${L.mark}</span>${L.who} ${L.thing}<span class="cap">${L.cap}</span></div>
+        <div>${R.html}${R.cap?`<span class="cap">${R.cap}</span>`:''}</div></div>
+      <div class="lexp small">👀 ${isShe?'女生 → 用 <b>She</b>':'男生 → 用 <b>He</b>'}；${likes?'❤️ 喜歡 → <b>likes</b>':'🚫 不喜歡 → <b>doesn\'t like</b>'}；數一數水果有幾個。</div>
+      <div class="ltag s">參考答案</div>${it.sents.map(s=>sentRow(s,'ans')).join('')}`;
+  } else if(part===5){
+    h += `<div class="chead"><span class="ic">🔤</span><span class="lb">${esc(it.title)}</span></div>
+      <div class="lexp">💡 ${it.explain}</div>
+      <div class="pwords">${it.words.map(w=>`<button class="pword" data-say="${w[0]}"><b>${hiRule(w[0],it.pos)}</b><small>${w[1]}</small></button>`).join('')}</div>
+      <div class="muted">四張發音卡的<b>第 ${it.pos} 個字</b>都是這一組。點字可以聽發音。</div>`;
+  }
+  h += `<label class="ldone"><input type="checkbox" ${done?'checked':''}> 我學會了</label>`;
+  return `<div class="card lcard ${done?'done':''} ${hideAns?'hide':''}" data-id="${it.id}">${h}</div>`;
+}
+// 把發音規則的字母標上顏色
+function hiRule(w,pos){
+  const pats={1:/a(?=[a-z]e$)|e$/g,2:/ai|ay/g,3:/ee|ea/g,4:/igh|ie|i(?=[a-z]e$)|e$/g}[pos];
+  return w.replace(pats,m=>`<span class="hl">${m}</span>`);
+}
+function partLearnProgress(n){ const its=LEARN[n]; return its.filter(i=>LEARNED[i.id]).length+'/'+its.length+' ✓'; }
+const PART_INTRO = {
+  1:'老師會先跟你打招呼，再問你在哪個房間、正在做什麼。先弄懂每個問句的意思，再記住回答的句型。',
+  2:'抽一張卡，把兩個句子大聲唸出來。先知道每句話的意思，唸起來會更順。點英文單字可以看中文意思。',
+  3:'看圖說兩句話。先學會兩個句型，再看每張圖要怎麼套進去。',
+  4:'老師會問你喜不喜歡、需要幾個。記住「怎麼問就怎麼答」。',
+  5:'這次考四組長母音。只要記住四個規則，抽到哪張卡都會唸。'
+};
+function renderLearn(){
+  main.innerHTML='';
+  const tabs = el(`<div class="parts">${PARTS.map(p=>`<button data-p="${p.n}" class="${p.n===curPart?'on':''}"><b>${p.name}</b><span>${p.short}・${partLearnProgress(p.n)}</span></button>`).join('')}</div>`);
+  tabs.querySelectorAll('button').forEach(b=>b.onclick=()=>{ curPart=+b.dataset.p; renderLearn(); });
+  main.appendChild(tabs);
+  const p=PARTS[curPart-1];
+  const canHide = curPart!==2 && curPart!==5;
+  main.appendChild(el(`<div class="parthead"><h2>📖 ${p.name}: ${esc(p.title)}</h2><p>${esc(PART_INTRO[curPart])}</p>
+    <div class="lhow"><span>👆 點<b>英文單字</b>看中文意思</span><span>🔊 正常速度</span><span>🐢 慢速</span>${canHide?`　<label style="margin-left:auto"><input type="checkbox" id="hideTgl" ${hideAns?'checked':''}> 🙈 考考自己：遮住英文答句</label>`:''}</div></div>`));
+  if(curPart===3){
+    main.appendChild(el(`<div class="card" style="margin-bottom:12px">
+      <div class="chead"><span class="ic">🧩</span><span class="lb">先學兩個句型</span></div>
+      <div class="ltag">句型 ①　喜不喜歡</div>
+      ${sentRow(S('He likes tea.','他喜歡茶。'))}${sentRow(S("She doesn't like coffee.",'她不喜歡咖啡。'))}
+      <ul class="lnotes"><li>喜歡：He／She + <b>likes</b> + 東西</li><li>不喜歡：He／She + <b>doesn't like</b> + 東西（doesn't 後面的 like <b>不加 s</b>）</li></ul>
+      <div class="ltag">句型 ②　需要幾個</div>
+      ${sentRow(S('He needs five oranges.','他需要五顆柳橙。'))}
+      <ul class="lnotes"><li>He／She + <b>needs</b> + 數字 + 東西<b>加 s</b></li></ul>
+    </div>`));
+  }
+  const grid=el('<div class="grid"></div>');
+  LEARN[curPart].forEach(it=>grid.appendChild(el(learnCardHTML(it,curPart))));
+  main.appendChild(grid);
+  main.appendChild(el(`<div style="text-align:center;margin-top:16px"><button class="btn primary" id="goPractice">學好了！去練習 ${p.name} →</button></div>`));
+  wireLearn(tabs);
+}
+function wireLearn(tabs){
+  const gloss=(card,w)=>{ let g=card.querySelector('.gloss'); if(!g){ g=el('<div class="gloss"></div>'); card.insertBefore(g, card.querySelector('.ldone')); }
+    g.innerHTML=`<b>${esc(w)}</b>：${esc(DICT[w])}`; };
+  main.querySelectorAll('.lcard').forEach(card=>{
+    card.querySelectorAll('[data-say]').forEach(b=>b.onclick=()=>speak(b.dataset.say));
+    card.querySelectorAll('[data-slow]').forEach(b=>b.onclick=()=>speak(b.dataset.slow,null,false,0.6));
+    card.querySelectorAll('.tw').forEach(t=>t.onclick=()=>{ speak(t.textContent.replace(/[.,!?]/g,'')); gloss(card,t.dataset.w); });
+    card.querySelectorAll('.ans').forEach(a=>a.addEventListener('click',e=>{
+      if(card.classList.contains('hide') && !a.classList.contains('peek') && !e.target.closest('button')){ a.classList.add('peek'); e.stopPropagation(); }
+    },true));
+    const chips=card.querySelectorAll('.chip');
+    chips.forEach(c=>c.onclick=()=>{
+      chips.forEach(x=>x.classList.toggle('on',x===c));
+      card.querySelector('.slot').textContent=c.dataset.en; card.querySelector('.slotzh').textContent=c.dataset.zh;
+      speak(card.querySelector('.pen').textContent);
+    });
+    const cb=card.querySelector('.ldone input');
+    cb.onchange=()=>{ setLearned(card.dataset.id, cb.checked); card.classList.toggle('done',cb.checked);
+      tabs.querySelectorAll('button').forEach(b=>b.querySelector('span').textContent=PARTS[b.dataset.p-1].short+'・'+partLearnProgress(+b.dataset.p)); };
+  });
+  // 句型說明卡（Part 3 上方）也要能點
+  main.querySelectorAll('.card:not(.lcard) [data-say]').forEach(b=>b.onclick=()=>speak(b.dataset.say));
+  main.querySelectorAll('.card:not(.lcard) [data-slow]').forEach(b=>b.onclick=()=>speak(b.dataset.slow,null,false,0.6));
+  main.querySelectorAll('.card:not(.lcard) .tw').forEach(t=>t.onclick=()=>speak(t.textContent.replace(/[.,!?]/g,'')));
+  const ht=document.getElementById('hideTgl');
+  if(ht) ht.onchange=()=>{ hideAns=ht.checked; main.querySelectorAll('.lcard').forEach(c=>{ c.classList.toggle('hide',hideAns); c.querySelectorAll('.peek').forEach(x=>x.classList.remove('peek')); }); };
+  document.getElementById('goPractice').onclick=()=>setMode('practice');
+}
+
 /* ================= 初始化 ================= */
 function render(){ if(active) active.stop(); stopSpeak();
-  if(mode==='practice') renderPractice(); else if(mode==='mock') renderMock(); else renderHelp(); }
-document.querySelectorAll('.modes button').forEach(b=>b.onclick=()=>{
-  document.querySelectorAll('.modes button').forEach(x=>x.classList.toggle('on',x===b)); mode=b.dataset.m; render(); });
+  if(mode==='learn') renderLearn(); else if(mode==='practice') renderPractice(); else if(mode==='mock') renderMock(); else renderHelp(); }
+function setMode(m){ mode=m; document.querySelectorAll('.modes button').forEach(x=>x.classList.toggle('on',x.dataset.m===m)); render(); window.scrollTo(0,0); }
+document.querySelectorAll('.modes button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
 document.querySelectorAll('#rateSeg button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('#rateSeg button').forEach(x=>x.classList.toggle('on',x===b)); RATE=+b.dataset.r; speak('This is the speed.'); });
 document.getElementById('stopBtn').onclick=stopSpeak;
